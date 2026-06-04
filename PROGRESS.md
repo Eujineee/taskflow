@@ -1,148 +1,123 @@
-# TaskFlow 프로젝트 진행 메모
+# TaskFlow 개발 진행 현황
 
-> 마지막 업데이트: 2026-05-23
-
----
-
-## 📌 프로젝트 개요
-
-**목표:** 이직 포트폴리오용 칸반 태스크 관리 앱  
-**스택:** Laravel 11 (API) + Vue 3 (SPA) + MySQL + Docker  
-**기능 범위:**
-- 로그인 / 회원가입 (Sanctum 인증)
-- 프로젝트 단위 칸반 보드
-- 카드 드래그앤드롭 (컬럼간 이동)
-- 팀원 초대 / 권한 관리 (admin / member / viewer)
-- 마감일 알림 (Laravel Notification)
+> 마지막 업데이트: 2026-06-05
 
 ---
 
-## 🔜 할 일 전체 목록
+## 기술 스택
 
-### Docker 환경
-- [ ] `docker-compose.yml` 작성
-  - `taskflow_app` — PHP 8.3-fpm (Laravel)
-  - `taskflow_nginx` — nginx (포트 8000)
-  - `taskflow_mysql` — MySQL 8.0 (포트 3306)
-  - `taskflow_frontend` — Node 20 Alpine (포트 5173)
-- [ ] `docker/php/Dockerfile` 작성 (PHP 8.3 + Composer)
-- [ ] `docker/nginx/default.conf` 작성
-
----
-
-### 백엔드 (Laravel)
-
-#### 0단계 — 초기 세팅
-- [ ] `composer create-project laravel/laravel backend`
-- [ ] `laravel/sanctum` 설치 (`composer require laravel/sanctum`)
-- [ ] `.env` 설정
-  - `APP_NAME=TaskFlow`
-  - `APP_URL=http://localhost:8000`
-  - `FRONTEND_URL=http://localhost:5173`
-  - DB → MySQL (host: mysql, db: taskflow, user: taskflow, pw: secret)
-  - `SANCTUM_STATEFUL_DOMAINS=localhost:5173`
-  - `SESSION_DRIVER=cookie`
-- [ ] `bootstrap/app.php` 수정
-  - API 라우트 (`routes/api.php`) 등록
-  - `$middleware->statefulApi()` 추가
-
-#### 1단계 — DB / 마이그레이션
-- [ ] `create_projects_table` — id, owner_id, name, description, color
-- [ ] `create_project_members_table` — project_id, user_id, role(admin/member/viewer)
-- [ ] `create_boards_table` — id, project_id, name, position
-- [ ] `create_cards_table` — id, board_id, assignee_id, title, description, priority, due_date, position
-- [ ] `cards` 테이블에 `labels` (JSON) 컬럼 추가 고려
-
-#### 2단계 — Eloquent 모델
-- [ ] `Project` (hasMany boards, belongsToMany users)
-- [ ] `ProjectMember` (pivot)
-- [ ] `Board` (hasMany cards, belongsTo project)
-- [ ] `Card` (belongsTo board, belongsTo assignee)
-
-#### 3단계 — 마이그레이션 실행
-- [ ] `docker compose up -d`
-- [ ] `docker compose exec app php artisan migrate`
-
-#### 4단계 — 인증 API
-- [ ] `routes/api.php` 작성
-- [ ] `AuthController` — register, login, logout, me
-- [ ] Sanctum 쿠키 기반 SPA 인증
-
-#### 5단계 — 비즈니스 로직 API
-- [ ] `ProjectController` — index, store, show, update, destroy
-- [ ] `ProjectMemberController` — invite(store), updateRole, remove
-- [ ] `BoardController` — index, store, update, destroy, reorder
-- [ ] `CardController` — index, store, show, update, destroy, move, reorder
-
-#### 6단계 — 정책 / 권한
-- [ ] `ProjectPolicy` — 오너/어드민만 삭제·초대 가능
-- [ ] `CardPolicy` — 프로젝트 멤버만 접근
-
-#### 7단계 — 알림
-- [ ] `DueDateNotification` (Laravel Notification) — 마감 1일 전 알림
-- [ ] `routes/console.php`에 스케줄 등록 (하루 1회 체크)
+| 레이어 | 기술 |
+|--------|------|
+| 백엔드 | Laravel (PHP) + Sanctum 인증 |
+| 프론트엔드 | React + TypeScript + Vite |
+| UI | Tailwind CSS + shadcn/ui (base-ui 기반) |
+| 상태관리 | Zustand |
+| HTTP | Axios |
+| 라우팅 | React Router |
+| 드래그앤드롭 | @dnd-kit/core + @dnd-kit/sortable |
+| 인프라 | Docker Compose + MySQL |
 
 ---
 
-### 프론트엔드 (Vue 3)
+## 완료된 작업
 
-#### 셋업
-- [ ] `frontend/` 디렉토리에 Vue 3 프로젝트 생성
-  ```bash
-  npm create vue@latest frontend
-  # Pinia ✓, Vue Router ✓, TypeScript 선택
-  ```
-- [ ] 패키지 설치: `axios`, `@vueuse/core`, `vuedraggable`, `tailwindcss`
+### 백엔드 (Laravel) ✅ 거의 완성
+- 인증: 회원가입 / 로그인 / 로그아웃 (Sanctum)
+- 프로젝트 CRUD + 멤버 초대/역할변경/제거 API
+- 보드(컬럼) CRUD + 순서변경 API
+- 카드 CRUD + 컬럼 간 이동 + 순서변경 API
+- Policy (권한 체크), DueDateNotification
+- Docker 환경 설정, DB 마이그레이션
 
-#### 페이지 구성
-- [ ] `/login` — 로그인
-- [ ] `/register` — 회원가입
-- [ ] `/projects` — 프로젝트 목록
-- [ ] `/projects/:id` — 칸반 보드 (메인 화면)
-- [ ] `/projects/:id/settings` — 멤버 관리
-
-#### 핵심 컴포넌트
-- [ ] `KanbanBoard.vue` — 보드 전체 레이아웃
-- [ ] `KanbanColumn.vue` — 컬럼 (드롭 대상)
-- [ ] `KanbanCard.vue` — 카드 (드래그 대상)
-- [ ] `CardModal.vue` — 카드 상세 / 수정
-- [ ] `InviteMemberModal.vue` — 멤버 초대
+### 프론트엔드 (React) ✅ 약 75%
+- 로그인 / 회원가입 페이지
+- 대시보드: 프로젝트 목록 조회 + 생성 모달 (색상 선택 포함)
+- 사이드바 + 레이아웃 (프로젝트 목록, 로그아웃)
+- Zustand 스토어: authStore, projectStore, boardStore
+- API 클라이언트: auth, projects, boards, cards 전부
+- **BoardPage**: 칸반 보드 전체 구현
+  - 보드 데이터 로드 (프로젝트 + 보드 + 카드 병렬 fetch)
+  - 컬럼 추가 / 이름 수정 (인라인) / 삭제
+  - 카드 빠른 추가 (컬럼 하단 인풋)
+  - 카드 UI: priority 뱃지, 마감일, 담당자 아바타
+  - 드래그앤드롭: 카드 순서변경, 컬럼 간 이동, 컬럼 순서변경
+  - DragOverlay (드래그 중 카드 미리보기)
+- **CardDetailModal**: 카드 상세 편집
+  - 제목 / 설명 / 우선순위 / 마감일 / 담당자 / 라벨
+  - 필드별 자동 저장 (blur 또는 onChange 즉시)
+  - 카드 삭제
 
 ---
 
-## 📁 목표 폴더 구조
+## 🔴 버그: 카드 수정 후 보드 즉시 반영 안 됨 (다음 작업 1순위)
+
+**증상**: CardDetailModal에서 제목/우선순위 등 수정 → API 저장은 되지만 보드의 카드가 갱신 안 됨
+
+**원인**: `BoardPage`의 `selectedCard` state가 초기 카드 객체를 들고 있어서,
+`boardStore.updateCard`가 호출돼도 모달에 보이는 카드는 여전히 이전 값.
+
+**해결 방법**: `CardDetailModal`에 `onUpdate` 콜백 추가 → 저장 시 부모(BoardPage)로 최신 카드 전달
+
+```tsx
+// CardDetailModal.tsx
+// Props에 추가
+onUpdate: (updated: Card) => void
+
+// save() 함수 수정
+const save = async (patch) => {
+  const updated = await cardsApi.update(boardId, card.id, patch)
+  updateCard(boardId, updated)
+  onUpdate(updated)  // 이 줄 추가
+}
+
+// BoardPage.tsx
+<CardDetailModal
+  ...
+  onUpdate={(updated) =>
+    setSelectedCard((prev) => prev ? { ...prev, card: updated } : null)
+  }
+/>
+```
+
+---
+
+## 남은 작업 목록
+
+### 버그 수정
+- [ ] 위 버그: 카드 수정 → 보드 즉시 반영 (수정 방법 위에 있음)
+
+### 기능 추가
+- [ ] **프로젝트 멤버 관리 UI**: 멤버 초대(이메일 입력), 역할 변경, 제거 → 백엔드 API 이미 있음
+- [ ] **프로젝트 설정 UI**: 이름/설명/색상 수정, 프로젝트 삭제
+- [ ] **새로고침 시 로그인 유지**: authStore 토큰 localStorage 복원 동작 테스트 필요
+
+### 안정성
+- [ ] **axios interceptor**: 401 응답 시 자동 로그아웃 처리 (현재 없음)
+- [ ] **카드 모달 오픈 시 최신 fetch**: 현재 store 캐시만 사용, 오래된 데이터 가능성 있음
+
+---
+
+## 주요 파일 위치
 
 ```
-taskflow/
-├── docker-compose.yml
-├── PROGRESS.md
-├── docker/
-│   ├── nginx/
-│   │   └── default.conf
-│   └── php/
-│       └── Dockerfile
-├── backend/             ← Laravel 11
-│   ├── .env
-│   ├── bootstrap/app.php
-│   ├── routes/
-│   │   ├── api.php
-│   │   └── web.php
-│   ├── app/
-│   │   ├── Http/Controllers/
-│   │   │   ├── AuthController.php
-│   │   │   ├── ProjectController.php
-│   │   │   ├── BoardController.php
-│   │   │   └── CardController.php
-│   │   ├── Models/
-│   │   │   ├── Project.php
-│   │   │   ├── Board.php
-│   │   │   └── Card.php
-│   │   └── Policies/
-│   └── database/migrations/
-└── frontend/            ← Vue 3
-    ├── src/
-    │   ├── pages/
-    │   ├── components/
-    │   └── stores/
-    └── package.json
+frontend/src/
+├── api/
+│   ├── client.ts             # axios 인스턴스
+│   ├── auth.ts / projects.ts / boards.ts / cards.ts
+├── store/
+│   ├── authStore.ts
+│   ├── projectStore.ts
+│   └── boardStore.ts         # boards + cards 같이 관리
+├── pages/
+│   ├── LoginPage.tsx
+│   ├── RegisterPage.tsx
+│   ├── DashboardPage.tsx
+│   └── BoardPage.tsx         # 칸반 보드 메인 (DnD 포함)
+├── components/
+│   ├── CardDetailModal.tsx   # 카드 상세/편집 모달
+│   ├── SortableCard.tsx      # 드래그 가능한 카드 컴포넌트
+│   └── layout/
+│       ├── Layout.tsx
+│       └── Sidebar.tsx
+└── types/index.ts            # 전체 타입 정의
 ```
