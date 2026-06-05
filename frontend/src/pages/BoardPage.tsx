@@ -510,6 +510,7 @@ export default function BoardPage() {
           boardId={selectedCard.boardId}
           members={currentProject?.members ?? []}
           onClose={() => setSelectedCard(null)}
+          onUpdate={(updated) => setSelectedCard((prev) => prev ? { ...prev, card: updated } : null)}
         />
       )}
     </>

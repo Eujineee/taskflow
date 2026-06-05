@@ -17,6 +17,7 @@ interface Props {
   boardId: number
   members: ProjectMember[]
   onClose: () => void
+  onUpdate: (updated: Card) => void
 }
 
 const PRIORITIES: { value: Priority; label: string }[] = [
@@ -33,7 +34,7 @@ const PRIORITY_COLOR: Record<Priority, string> = {
   urgent: 'bg-red-100 text-red-700 border-red-200',
 }
 
-export default function CardDetailModal({ card, boardId, members, onClose }: Props) {
+export default function CardDetailModal({ card, boardId, members, onClose, onUpdate }: Props) {
   const { updateCard, removeCard } = useBoardStore((s) => ({
     updateCard: s.updateCard,
     removeCard: s.removeCard,
@@ -56,6 +57,7 @@ export default function CardDetailModal({ card, boardId, members, onClose }: Pro
     try {
       const updated = await cardsApi.update(boardId, card.id, patch)
       updateCard(boardId, updated)
+      onUpdate(updated)
     } catch {
       toast.error('저장에 실패했습니다.')
     }
