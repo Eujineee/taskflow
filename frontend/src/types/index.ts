@@ -8,9 +8,11 @@ export interface User {
 }
 
 // ===== 프로젝트 멤버 =====
+export type MemberRole = 'admin' | 'member' | 'viewer'
+
 export interface ProjectMember extends User {
   pivot: {
-    role: 'owner' | 'admin' | 'member'
+    role: MemberRole
   }
 }
 

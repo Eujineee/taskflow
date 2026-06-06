@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Trash2, X, Tag } from 'lucide-react'
 
@@ -51,6 +51,20 @@ export default function CardDetailModal({ card, boardId, members, onClose, onUpd
   const [isDeleting, setIsDeleting] = useState(false)
 
   const titleRef = useRef<HTMLInputElement>(null)
+
+  // 모달 오픈 시 최신 카드 데이터 fetch
+  useEffect(() => {
+    cardsApi.get(boardId, card.id).then((fresh) => {
+      setTitle(fresh.title)
+      setDescription(fresh.description ?? '')
+      setPriority(fresh.priority ?? '')
+      setDueDate(fresh.due_date ?? '')
+      setAssigneeId(fresh.assignee_id ?? '')
+      setLabels(fresh.labels ?? [])
+      updateCard(boardId, fresh)
+      onUpdate(fresh)
+    }).catch(() => {})
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 공통 저장 함수 ──────────────────────────────────
   const save = async (patch: Parameters<typeof cardsApi.update>[2]) => {

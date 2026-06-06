@@ -47,7 +47,7 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load('boards.cards');
+        $project->load('boards.cards', 'members');
 
         return response()->json($project);
     }

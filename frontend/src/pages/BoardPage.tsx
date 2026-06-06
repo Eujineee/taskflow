@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Plus, Trash2, Pencil, Check, X, GripVertical } from 'lucide-react'
+import { Plus, Trash2, Pencil, Check, X, GripVertical, Settings, Users } from 'lucide-react'
 import {
   DndContext,
   DragOverlay,
@@ -31,6 +31,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import SortableCard, { CardContent } from '@/components/SortableCard'
 import CardDetailModal from '@/components/CardDetailModal'
+import ProjectSettingsModal from '@/components/ProjectSettingsModal'
+import ProjectMembersModal from '@/components/ProjectMembersModal'
 
 // ── 컬럼 카드 영역: 빈 컬럼에도 드롭 가능하게 ─────────────
 function CardDropZone({ boardId }: { boardId: number }) {
@@ -137,6 +139,10 @@ export default function BoardPage() {
 
   // ── 카드 상세 모달 상태 ──────────────────────────────
   const [selectedCard, setSelectedCard] = useState<{ card: Card; boardId: number } | null>(null)
+
+  // ── 프로젝트 모달 상태 ──────────────────────────────
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isMembersOpen, setIsMembersOpen] = useState(false)
 
   // ── 드래그 상태 ──────────────────────────────────────
   const [activeCard, setActiveCard] = useState<Card | null>(null)
@@ -368,6 +374,23 @@ export default function BoardPage() {
           )}
           <h1 className="text-lg font-semibold text-gray-900">{currentProject?.name ?? '...'}</h1>
           <span className="text-sm text-muted-foreground">{boards.length}개 컬럼</span>
+
+          <div className="ml-auto flex items-center gap-1">
+            <button
+              onClick={() => setIsMembersOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            >
+              <Users size={15} />
+              멤버
+            </button>
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            >
+              <Settings size={15} />
+              설정
+            </button>
+          </div>
         </div>
 
         {/* 칸반 영역 */}
@@ -511,6 +534,22 @@ export default function BoardPage() {
           members={currentProject?.members ?? []}
           onClose={() => setSelectedCard(null)}
           onUpdate={(updated) => setSelectedCard((prev) => prev ? { ...prev, card: updated } : null)}
+        />
+      )}
+
+      {/* 프로젝트 설정 모달 */}
+      {isSettingsOpen && currentProject && (
+        <ProjectSettingsModal
+          project={currentProject}
+          onClose={() => setIsSettingsOpen(false)}
+        />
+      )}
+
+      {/* 프로젝트 멤버 모달 */}
+      {isMembersOpen && currentProject && (
+        <ProjectMembersModal
+          project={currentProject}
+          onClose={() => setIsMembersOpen(false)}
         />
       )}
     </>
