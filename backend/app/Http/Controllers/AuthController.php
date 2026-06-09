@@ -1,4 +1,5 @@
 <?php
+// 로그인 / 회원가입 / 로그아웃
 
 namespace App\Http\Controllers;
 
@@ -26,7 +27,9 @@ class AuthController extends Controller
             'password' => Hash::make($data['password']),
         ]);
 
-        return response()->json($user, 201);
+        $token = $user->createToken('api')->plainTextToken;
+
+        return response()->json(['user' => $user, 'token' => $token], 201);
     }
 
     // 로그인
@@ -43,19 +46,16 @@ class AuthController extends Controller
             ]);
         }
 
-        // 세션 재생성 (세션 고정 공격 방지)
-        $request->session()->regenerate();
+        $user  = Auth::user();
+        $token = $user->createToken('api')->plainTextToken;
 
-        return response()->json(Auth::user());
+        return response()->json(['user' => $user, 'token' => $token]);
     }
 
     // 로그아웃
     public function logout(Request $request): JsonResponse
     {
-        Auth::guard('web')->logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Logged out']);
     }

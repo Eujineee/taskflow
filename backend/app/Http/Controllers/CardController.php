@@ -1,4 +1,5 @@
 <?php
+// 카드 생성 / 조회 / 수정 / 삭제 / 이동 / 순서 변경
 
 namespace App\Http\Controllers;
 

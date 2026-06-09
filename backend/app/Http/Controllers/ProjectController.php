@@ -1,4 +1,5 @@
 <?php
+// 프로젝트 생성 / 조회 / 수정 / 삭제
 
 namespace App\Http\Controllers;
 

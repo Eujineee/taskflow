@@ -1,4 +1,5 @@
 <?php
+// 보드(컬럼) 생성 / 수정 / 삭제 / 순서 변경
 
 namespace App\Http\Controllers;
 
