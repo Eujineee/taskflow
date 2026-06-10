@@ -13,6 +13,8 @@ class ProjectMemberController extends Controller
     // 멤버 초대
     public function store(Request $request, Project $project): JsonResponse
     {
+        $this->authorize('manageMembers', $project);
+
         $data = $request->validate([
             'email' => 'required|email|exists:users,email',
             'role'  => 'required|in:admin,member,viewer',
@@ -20,7 +22,6 @@ class ProjectMemberController extends Controller
 
         $user = User::where('email', $data['email'])->first();
 
-        // 이미 멤버인지 확인
         if ($project->members()->where('user_id', $user->id)->exists()) {
             return response()->json(['message' => '이미 멤버입니다.'], 422);
         }
@@ -33,6 +34,8 @@ class ProjectMemberController extends Controller
     // 역할 변경
     public function update(Request $request, Project $project, User $user): JsonResponse
     {
+        $this->authorize('manageMembers', $project);
+
         $data = $request->validate([
             'role' => 'required|in:admin,member,viewer',
         ]);
@@ -45,6 +48,8 @@ class ProjectMemberController extends Controller
     // 멤버 제거
     public function destroy(Project $project, User $user): JsonResponse
     {
+        $this->authorize('manageMembers', $project);
+
         $project->members()->detach($user->id);
 
         return response()->json(['message' => '멤버 제거 완료']);

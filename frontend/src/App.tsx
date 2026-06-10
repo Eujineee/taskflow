@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from '@/components/ui/sonner'
 import { useAuthStore } from '@/store/authStore'
+import { useShallow } from 'zustand/react/shallow'
 import { authApi } from '@/api'
 
 import LoginPage from '@/pages/LoginPage'
@@ -21,12 +22,14 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const { token, isInitialized, setUser, setInitialized } = useAuthStore((state) => ({
-    token: state.token,
-    isInitialized: state.isInitialized,
-    setUser: state.setUser,
-    setInitialized: state.setInitialized,
-  }))
+  const { token, isInitialized, setUser, setInitialized } = useAuthStore(
+    useShallow((state) => ({
+      token: state.token,
+      isInitialized: state.isInitialized,
+      setUser: state.setUser,
+      setInitialized: state.setInitialized,
+    }))
+  )
 
   // 새로고침 시 localStorage 토큰으로 유저 정보 복원
   useEffect(() => {

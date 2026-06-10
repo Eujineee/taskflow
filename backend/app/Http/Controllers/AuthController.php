@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -21,13 +22,16 @@ class AuthController extends Controller
             'password' => 'required|string|min:8|confirmed', // password_confirmation 필드 필요
         ]);
 
-        $user = User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
-            'password' => Hash::make($data['password']),
-        ]);
+        [$user, $token] = DB::transaction(function () use ($data) {
+            $user  = User::create([
+                'name'     => $data['name'],
+                'email'    => $data['email'],
+                'password' => Hash::make($data['password']),
+            ]);
+            $token = $user->createToken('api')->plainTextToken;
 
-        $token = $user->createToken('api')->plainTextToken;
+            return [$user, $token];
+        });
 
         return response()->json(['user' => $user, 'token' => $token], 201);
     }

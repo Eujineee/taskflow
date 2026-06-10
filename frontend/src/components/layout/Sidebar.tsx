@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { LayoutDashboard, Plus, LogOut, FolderKanban } from 'lucide-react'
+import { useShallow } from 'zustand/react/shallow'
 
 import { authApi, projectsApi } from '@/api'
 import { useAuthStore } from '@/store/authStore'
@@ -16,16 +17,17 @@ export default function Sidebar() {
   const { projectId } = useParams()
 
   // 스토어에서 필요한 값/함수 꺼내오기
-  const { user, logout } = useAuthStore((state) => ({
-    user: state.user,
-    logout: state.logout,
-  }))
-  const { projects, setProjects, isLoading, setLoading } = useProjectStore((state) => ({
-    projects: state.projects,
-    setProjects: state.setProjects,
-    isLoading: state.isLoading,
-    setLoading: state.setLoading,
-  }))
+  const { user, logout } = useAuthStore(
+    useShallow((state) => ({ user: state.user, logout: state.logout }))
+  )
+  const { projects, setProjects, isLoading, setLoading } = useProjectStore(
+    useShallow((state) => ({
+      projects: state.projects,
+      setProjects: state.setProjects,
+      isLoading: state.isLoading,
+      setLoading: state.setLoading,
+    }))
+  )
 
   // ── 마운트 시 프로젝트 목록 불러오기 ────────────────
   // useEffect: 컴포넌트가 화면에 처음 나타날 때 실행

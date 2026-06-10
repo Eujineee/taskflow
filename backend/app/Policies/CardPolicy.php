@@ -19,9 +19,11 @@ class CardPolicy
         return $this->isProjectMember($user, $card);
     }
 
-    public function create(User $user, Card $card): bool
+    public function create(User $user, \App\Models\Board $board): bool
     {
-        return $this->isProjectMember($user, $card);
+        $project = $board->project;
+        return $project->owner_id === $user->id
+            || $project->members()->where('user_id', $user->id)->exists();
     }
 
     public function update(User $user, Card $card): bool

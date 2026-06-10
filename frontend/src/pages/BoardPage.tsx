@@ -26,6 +26,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { boardsApi, cardsApi, projectsApi } from '@/api'
 import { useBoardStore } from '@/store/boardStore'
 import { useProjectStore } from '@/store/projectStore'
+import { useShallow } from 'zustand/react/shallow'
 import type { Board, Card } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -105,23 +106,24 @@ export default function BoardPage() {
     setBoards, setCards, setLoading,
     addBoard, updateBoard, removeBoard,
     addCard, moveCard,
-  } = useBoardStore((s) => ({
-    boards: s.boards,
-    isLoading: s.isLoading,
-    setBoards: s.setBoards,
-    setCards: s.setCards,
-    setLoading: s.setLoading,
-    addBoard: s.addBoard,
-    updateBoard: s.updateBoard,
-    removeBoard: s.removeBoard,
-    addCard: s.addCard,
-    moveCard: s.moveCard,
-  }))
+  } = useBoardStore(
+    useShallow((s) => ({
+      boards: s.boards,
+      isLoading: s.isLoading,
+      setBoards: s.setBoards,
+      setCards: s.setCards,
+      setLoading: s.setLoading,
+      addBoard: s.addBoard,
+      updateBoard: s.updateBoard,
+      removeBoard: s.removeBoard,
+      addCard: s.addCard,
+      moveCard: s.moveCard,
+    }))
+  )
 
-  const { currentProject, setCurrentProject } = useProjectStore((s) => ({
-    currentProject: s.currentProject,
-    setCurrentProject: s.setCurrentProject,
-  }))
+  const { currentProject, setCurrentProject } = useProjectStore(
+    useShallow((s) => ({ currentProject: s.currentProject, setCurrentProject: s.setCurrentProject }))
+  )
 
   // ── 컬럼 편집 상태 ───────────────────────────────────
   const [editingId, setEditingId] = useState<number | null>(null)

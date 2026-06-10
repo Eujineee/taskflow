@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useShallow } from 'zustand/react/shallow'
 import { Plus, FolderKanban, Users } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -8,7 +9,7 @@ import { useProjectStore } from '@/store/projectStore'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -23,10 +24,9 @@ export default function DashboardPage() {
   const navigate = useNavigate()
 
   // 스토어에서 프로젝트 목록과 추가 함수 가져오기
-  const { projects, addProject } = useProjectStore((state) => ({
-    projects: state.projects,
-    addProject: state.addProject,
-  }))
+  const { projects, addProject } = useProjectStore(
+    useShallow((state) => ({ projects: state.projects, addProject: state.addProject }))
+  )
 
   // ── 모달 상태 ────────────────────────────────────────
   // 모달 열림/닫힘, 폼 입력값들
@@ -34,9 +34,8 @@ export default function DashboardPage() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [color, setColor] = useState(PROJECT_COLORS[5]) // 기본: 파란색
-  const [isLoading, setIsLoading] = useState(false)
+  const isSubmitting = useRef(false)
 
-  // ── 모달 닫기 + 초기화 ──────────────────────────────
   const handleClose = () => {
     setIsOpen(false)
     setName('')
@@ -44,24 +43,25 @@ export default function DashboardPage() {
     setColor(PROJECT_COLORS[5])
   }
 
-  // ── 프로젝트 생성 ────────────────────────────────────
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim()) return
+    if (!name.trim() || isSubmitting.current) return
 
-    setIsLoading(true)
+    isSubmitting.current = true
+
+    // API 호출 전 즉시 닫아서 재클릭 원천 차단
+    const payload = { name: name.trim(), description, color }
+    handleClose()
+
     try {
-      const newProject = await projectsApi.create({ name, description, color })
-      // 스토어에 추가 → 사이드바 + 대시보드 목록 자동 갱신
+      const newProject = await projectsApi.create(payload)
       addProject(newProject)
       toast.success(`"${newProject.name}" 프로젝트가 생성됐습니다!`)
-      handleClose()
-      // 만든 프로젝트 보드로 바로 이동
       navigate(`/projects/${newProject.id}`)
     } catch {
       toast.error('프로젝트 생성에 실패했습니다.')
     } finally {
-      setIsLoading(false)
+      isSubmitting.current = false
     }
   }
 
@@ -136,17 +136,21 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── 새 프로젝트 모달 ─────────────────────────────── */}
-      {/* open: 모달 표시 여부 / onOpenChange: 닫기 버튼 클릭 시 */}
       <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>새 프로젝트 만들기</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+          {/* 컬러 헤더 */}
+          <div
+            className="h-24 flex items-end px-6 pb-4 transition-colors duration-200"
+            style={{ backgroundColor: color }}
+          >
+            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <FolderKanban size={20} className="text-white" />
+            </div>
+          </div>
 
-          <form onSubmit={handleCreate} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="project-name">프로젝트 이름 *</Label>
+          <form onSubmit={handleCreate} className="px-6 pb-6 pt-4 space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="project-name" className="text-sm font-medium">프로젝트 이름</Label>
               <Input
                 id="project-name"
                 placeholder="예: 쇼핑몰 리뉴얼"
@@ -154,49 +158,52 @@ export default function DashboardPage() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 autoFocus
+                className="h-10"
               />
             </div>
 
-            <div className="space-y-1">
-              <Label htmlFor="project-desc">설명 (선택)</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="project-desc" className="text-sm font-medium">설명 <span className="text-muted-foreground font-normal">(선택)</span></Label>
               <Textarea
                 id="project-desc"
-                placeholder="프로젝트에 대한 간단한 설명"
+                placeholder="어떤 프로젝트인지 간단히 설명해주세요"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                rows={3}
+                rows={2}
+                className="resize-none text-sm"
               />
             </div>
 
-            {/* 색상 선택 */}
             <div className="space-y-2">
-              <Label>색상</Label>
+              <Label className="text-sm font-medium">색상</Label>
               <div className="flex gap-2">
                 {PROJECT_COLORS.map((c) => (
                   <button
                     key={c}
                     type="button"
-                    className="w-7 h-7 rounded-full transition-transform hover:scale-110"
-                    style={{ backgroundColor: c }}
                     onClick={() => setColor(c)}
+                    className="w-7 h-7 rounded-lg transition-all hover:scale-110 flex items-center justify-center"
+                    style={{ backgroundColor: c, outline: color === c ? `2px solid ${c}` : 'none', outlineOffset: '2px' }}
                   >
-                    {/* 선택된 색상엔 흰 체크 표시 */}
-                    {color === c && (
-                      <span className="flex items-center justify-center text-white text-xs font-bold">✓</span>
-                    )}
+                    {color === c && <span className="text-white text-xs font-bold">✓</span>}
                   </button>
                 ))}
               </div>
             </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
+            <div className="flex gap-2 pt-1">
+              <Button type="button" variant="outline" onClick={handleClose} className="flex-1">
                 취소
               </Button>
-              <Button type="submit" disabled={isLoading || !name.trim()}>
-                {isLoading ? '생성 중...' : '만들기'}
+              <Button
+                type="submit"
+                disabled={!name.trim()}
+                className="flex-1 text-white"
+                style={{ backgroundColor: color }}
+              >
+                프로젝트 만들기
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </DialogContent>
       </Dialog>

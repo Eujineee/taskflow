@@ -4,6 +4,7 @@ import { Trash2, X, Tag } from 'lucide-react'
 
 import { cardsApi } from '@/api'
 import { useBoardStore } from '@/store/boardStore'
+import { useShallow } from 'zustand/react/shallow'
 import type { Card, ProjectMember, Priority } from '@/types'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -35,10 +36,9 @@ const PRIORITY_COLOR: Record<Priority, string> = {
 }
 
 export default function CardDetailModal({ card, boardId, members, onClose, onUpdate }: Props) {
-  const { updateCard, removeCard } = useBoardStore((s) => ({
-    updateCard: s.updateCard,
-    removeCard: s.removeCard,
-  }))
+  const { updateCard, removeCard } = useBoardStore(
+    useShallow((s) => ({ updateCard: s.updateCard, removeCard: s.removeCard }))
+  )
 
   // 각 필드의 로컬 상태 (card를 초기값으로)
   const [title, setTitle]           = useState(card.title)
